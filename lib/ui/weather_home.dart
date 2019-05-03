@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_weather_app/util/util.dart';
+import 'package:flutter_weather_app/util/util.dart' as util;
 import 'package:http/http.dart' as http;
 
 ///Created on Android Studio Canary Version
@@ -16,6 +16,8 @@ class WeatherApp extends StatefulWidget {
 }
 
 class _WeatherAppState extends State<WeatherApp> {
+  String receivedData;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +27,9 @@ class _WeatherAppState extends State<WeatherApp> {
           IconButton(
             icon: Icon(Icons.menu),
             tooltip: "Menu",
-            onPressed: () {},
+            onPressed: () {
+              _goToNextScreen(context);
+            },
           ),
         ],
       ),
@@ -45,7 +49,9 @@ class _WeatherAppState extends State<WeatherApp> {
             alignment: Alignment.topRight,
             margin: EdgeInsets.fromLTRB(0.0, 10.9, 20.9, 0.90),
             child: Text(
-              "Mumbai",
+              receivedData == null || receivedData == ""
+                ? util.defaultCity
+                : "$receivedData",
               style: cityStyle(),
             ),
           ), //City Name
@@ -54,22 +60,37 @@ class _WeatherAppState extends State<WeatherApp> {
             child: Image.asset("images/light_rain.png"),
           ), //Rain Icon
           Container(
-            alignment: Alignment.center,
-            margin: EdgeInsets.fromLTRB(30.0, 290.0, 0.0, 0.0),
-            child: Text(
-              "26.8F",
-              style: temperatureStyle(),
-            ),
-          ), //Weather data
+            alignment: Alignment.bottomLeft,
+            child: updateTemperatureWidget(
+              receivedData == null || receivedData == ""
+                ? util.defaultCity
+                : "$receivedData")), //Weather data
         ],
       ),
     );
+  }
 
-    Future<Map> getWeather(String apiId, String city) async {
-      final apiUrl = "http://api.openweathermap.org/data/2.5/forecast?id=$cityId&APPID=$apiId&units=metric";
-      http.Response response = await http.get(apiUrl);
-      return jsonDecode(response.body);
+  Future _goToNextScreen(BuildContext context) async {
+    //hint: Dont use "new" as its not required in dart 2.0 and using it will prevent autocomplete from working
+    //hint: Type MaterialPageRoute() to get autocomplete instead of MaterialPageRoute<Map>
+    var form = MaterialPageRoute<Map>(builder: (BuildContext context) {
+      return ChangeCity();
+    });
+    Map result = await Navigator.of(context).push(form);
+
+    if (result != null && result.containsKey('city')) {
+      if (result['city'] == "")
+        receivedData = util.defaultCity;
+      else
+        receivedData = result['city'];
     }
+  }
+
+  Future<Map> getWeather(String apiId, String cityId) async {
+    final apiUrl =
+      "http://api.openweathermap.org/data/2.5/forecast?q=$cityId&APPID=$apiId&units=metric";
+    http.Response response = await http.get(apiUrl);
+    return jsonDecode(response.body);
   }
 
   TextStyle temperatureStyle() {
@@ -83,5 +104,75 @@ class _WeatherAppState extends State<WeatherApp> {
   TextStyle cityStyle() {
     return TextStyle(
       color: Colors.white, fontSize: 22.9, fontStyle: FontStyle.italic);
+  }
+
+  Widget updateTemperatureWidget(String city) {
+    return FutureBuilder(
+      future: getWeather(util.apiId, city == "" ? util.defaultCity : city),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          Map content = snapshot.data;
+          return Container(
+//            child: Center(
+            child: ListTile(
+              title: Text(content['cod'] != "404"
+                ? "${content['list'][0]['main']['temp']} C"
+                : "Invalid City Name",
+                style: temperatureStyle(),
+              ),
+            ),
+//            ),
+          );
+        } else {
+          return Container(
+            child: CircularProgressIndicator(),
+          );
+        }
+      },
+    );
+  }
+}
+
+class ChangeCity extends StatelessWidget {
+  var _cityNameController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text("Change Ciy"),
+      ),
+      body: Stack(
+        children: <Widget>[
+          Center(
+            child: Image.asset(
+              'images/white_snow.png',
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.fill,
+            ),
+          ),
+          ListView(
+            children: <Widget>[
+              ListTile(
+                title: TextField(
+                  controller: _cityNameController,
+                  decoration: InputDecoration(labelText: "Enter City"),
+                ),
+              ),
+              ListTile(
+                title: FlatButton(
+                  onPressed: () {
+                    Navigator.pop(context, {'city': _cityNameController.text});
+                  },
+                  child: Text("Get Weather"),
+                ),
+              )
+            ],
+          )
+        ],
+      ),
+    );
   }
 }
