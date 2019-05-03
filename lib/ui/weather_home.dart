@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_weather_app/util/util.dart';
+import 'package:http/http.dart' as http;
 
 ///Created on Android Studio Canary Version
 ///User: Gagandeep
@@ -60,18 +64,24 @@ class _WeatherAppState extends State<WeatherApp> {
         ],
       ),
     );
+
+    Future<Map> getWeather(String apiId, String city) async {
+      final apiUrl = "http://api.openweathermap.org/data/2.5/forecast?id=$cityId&APPID=$apiId&units=metric";
+      http.Response response = await http.get(apiUrl);
+      return jsonDecode(response.body);
+    }
   }
 
   TextStyle temperatureStyle() {
     return TextStyle(
-        color: Colors.white,
-        fontStyle: FontStyle.normal,
-        fontSize: 49.9,
-        fontWeight: FontWeight.w500);
+      color: Colors.white,
+      fontStyle: FontStyle.normal,
+      fontSize: 49.9,
+      fontWeight: FontWeight.w500);
   }
 
   TextStyle cityStyle() {
     return TextStyle(
-        color: Colors.white, fontSize: 22.9, fontStyle: FontStyle.italic);
+      color: Colors.white, fontSize: 22.9, fontStyle: FontStyle.italic);
   }
 }
