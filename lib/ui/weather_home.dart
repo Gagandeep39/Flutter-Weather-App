@@ -106,6 +106,11 @@ class _WeatherAppState extends State<WeatherApp> {
       color: Colors.white, fontSize: 22.9, fontStyle: FontStyle.italic);
   }
 
+  TextStyle extraStyle() {
+    return TextStyle(
+      color: Colors.white, fontSize: 18, fontStyle: FontStyle.normal);
+  }
+
   Widget updateTemperatureWidget(String city) {
     return FutureBuilder(
       future: getWeather(util.apiId, city == "" ? util.defaultCity : city),
@@ -117,7 +122,7 @@ class _WeatherAppState extends State<WeatherApp> {
           else
             return Container(
             child: ListTile(
-              title: Text("${content['list'][0]['main']['temp']} C",
+              title: Text("${content['list'][0]['main']['temp']} °C",
                 style: temperatureStyle(),
               ),
               subtitle: ListTile(
@@ -125,9 +130,7 @@ class _WeatherAppState extends State<WeatherApp> {
                   "Humidity: ${content['list'][0]['main']['humidity']} \n"
                     + "Min: ${content['list'][0]['main']['temp_min']} \n"
                     + "Max: ${content['list'][0]['main']['temp_max']} \n",
-                  style: TextStyle(
-                    color: Colors.white
-                  ),
+                  style: extraStyle(),
                 ),
               ),
             ),
@@ -143,7 +146,9 @@ class _WeatherAppState extends State<WeatherApp> {
 }
 
 class ChangeCity extends StatelessWidget {
-  var _cityNameController = TextEditingController();
+
+
+  final _cityNameController = TextEditingController(); //make sure its always final
 
   @override
   Widget build(BuildContext context) {
