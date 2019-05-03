@@ -112,16 +112,25 @@ class _WeatherAppState extends State<WeatherApp> {
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
           Map content = snapshot.data;
-          return Container(
-//            child: Center(
+          if (content['cod'] == "404")
+            return Text("Invalid City Name");
+          else
+            return Container(
             child: ListTile(
-              title: Text(content['cod'] != "404"
-                ? "${content['list'][0]['main']['temp']} C"
-                : "Invalid City Name",
+              title: Text("${content['list'][0]['main']['temp']} C",
                 style: temperatureStyle(),
               ),
+              subtitle: ListTile(
+                title: Text(
+                  "Humidity: ${content['list'][0]['main']['humidity']} \n"
+                    + "Min: ${content['list'][0]['main']['temp_min']} \n"
+                    + "Max: ${content['list'][0]['main']['temp_max']} \n",
+                  style: TextStyle(
+                    color: Colors.white
+                  ),
+                ),
+              ),
             ),
-//            ),
           );
         } else {
           return Container(
